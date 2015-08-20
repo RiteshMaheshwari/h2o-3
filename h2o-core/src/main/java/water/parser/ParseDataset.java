@@ -1,12 +1,8 @@
 package water.parser;
 
-import com.google.common.base.Charsets;
 import jsr166y.CountedCompleter;
 import jsr166y.ForkJoinTask;
 import jsr166y.RecursiveAction;
-
-import org.apache.commons.lang.StringUtils;
-
 import water.*;
 import water.H2O.H2OCountedCompleter;
 import water.exceptions.H2OIllegalArgumentException;
@@ -29,6 +25,9 @@ import java.util.concurrent.Future;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
+import com.google.common.base.Charsets;
+import org.apache.commons.lang.StringUtils;
 
 public final class ParseDataset extends Job<Frame> {
   private MultiFileParseTask _mfpt; // Access to partially built vectors for cleanup after parser crash
@@ -530,7 +529,6 @@ public final class ParseDataset extends Job<Frame> {
       for (int i=0; i < strCnt; i++) {
         final int strLen = UnsafeUtils.get4(_packedDomains[colIdx], j);
         j += 4;
-        ValueString v = new ValueString(_packedDomains[colIdx],j, strLen);
         res[i] = new String(_packedDomains[colIdx], j, strLen, Charsets.UTF_8);
         j += strLen;
       }
