@@ -4,6 +4,9 @@ import com.google.common.base.Charsets;
 import jsr166y.CountedCompleter;
 import jsr166y.ForkJoinTask;
 import jsr166y.RecursiveAction;
+
+import org.apache.commons.lang.StringUtils;
+
 import water.*;
 import water.H2O.H2OCountedCompleter;
 import water.exceptions.H2OIllegalArgumentException;
@@ -234,11 +237,16 @@ public final class ParseDataset extends Job<Frame> {
       job.update(0, "Collecting categorical domains across nodes.");
       {
         GatherCategoricalDomainsTask gcdt = new GatherCategoricalDomainsTask(mfpt._eKey, ecols).doAllNodes();
+        //Test domains for excessive length.
+        List<String> offendingColNames = new ArrayList<>();
+        for (int i = 0; i < ecols.length; i++)
+          if (gcdt.getDomainLength(i) > Categorical.MAX_CATEGORICAL_COUNT)
+            offendingColNames.add(setup._column_names[ecols[i]]);
+        if (offendingColNames.size() > 0)
+          throw new H2OParseException("Exceeded categorical limit on columns "+ StringUtils.join(offendingColNames,", ")+".   Consider reparsing these columns as a string.");
+
         for (int i = 0; i < ecols.length; i++) {
           String[] dom = gcdt.getDomain(i);
-          //FIXME find all offending columns and list in exception
-          if (dom.length > Categorical.MAX_CATEGORICAL_COUNT)
-            throw new H2OParseException("Exceeded categorical limit on column "+setup._column_names[ecols[i]]+".   Consider reparsing this column as a string.");
           avs[ecols[i]].setDomain(gcdt.getDomain(i));
         }
       }
@@ -511,19 +519,23 @@ public final class ParseDataset extends Job<Frame> {
       }
       return packedDom;
     }
+    public int getDomainLength(int colIdx) {
+      if (_packedDomains == null) return 0;
+      else return UnsafeUtils.get4(_packedDomains[colIdx], 0);
+    }
 
-    public String[] getDomain(int col) {
+    public String[] getDomain(int colIdx) {
       if (_packedDomains == null) return null;
-      final int strCnt = UnsafeUtils.get4(_packedDomains[col], 0);
+      final int strCnt = UnsafeUtils.get4(_packedDomains[colIdx], 0);
       final String[] res = new String[strCnt];
       int j = 4;
       for (int i=0; i < strCnt; i++) {
-        final int strLen = UnsafeUtils.get4(_packedDomains[col], j);
+        final int strLen = UnsafeUtils.get4(_packedDomains[colIdx], j);
         j += 4;
-        ValueString v = new ValueString(_packedDomains[col],j, strLen);
+        ValueString v = new ValueString(_packedDomains[colIdx],j, strLen);
         if (v.detectExtAscii())
           Log.info("bar");
-        res[i] = new String(_packedDomains[col], j, strLen, Charsets.UTF_8);
+        res[i] = new String(_packedDomains[colIdx], j, strLen, Charsets.UTF_8);
         j += strLen;
       }
       return res;
