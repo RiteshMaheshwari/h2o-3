@@ -245,10 +245,8 @@ public final class ParseDataset extends Job<Frame> {
         if (offendingColNames.size() > 0)
           throw new H2OParseException("Exceeded categorical limit on columns "+ StringUtils.join(offendingColNames,", ")+".   Consider reparsing these columns as a string.");
 
-        for (int i = 0; i < ecols.length; i++) {
-          String[] dom = gcdt.getDomain(i);
+        for (int i = 0; i < ecols.length; i++)
           avs[ecols[i]].setDomain(gcdt.getDomain(i));
-        }
       }
 
       job.update(0, "Compressing data.");
@@ -533,8 +531,6 @@ public final class ParseDataset extends Job<Frame> {
         final int strLen = UnsafeUtils.get4(_packedDomains[colIdx], j);
         j += 4;
         ValueString v = new ValueString(_packedDomains[colIdx],j, strLen);
-        if (v.detectExtAscii())
-          Log.info("bar");
         res[i] = new String(_packedDomains[colIdx], j, strLen, Charsets.UTF_8);
         j += strLen;
       }
