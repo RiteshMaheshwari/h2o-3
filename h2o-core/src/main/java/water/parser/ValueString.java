@@ -113,33 +113,35 @@ public class ValueString extends Iced implements Comparable<ValueString> {
     boolean isExtAscii = false;
     for (int i=0; i < _len; i++) {
       byte c = _buf[_off+i];
-      if ((c & 0x80) != 0) { //possible start of UTF-8 bytes
-        if ((c & 0xC0) != 0) { // not valid UTF-8
+      if ((c & 0x80) == 128) { //possible start of UTF-8 bytes or extended ASCII
+        if ((c & 0xC0) != 192) { // not valid UTF-8
           isExtAscii = true;
           break;
-        } else if ((c & 0xE0) != 0) { //possibly byte-1 of 2-byte UTF-8 char
-          if ((_buf[_off + ++i] & 0x80) != 0) isExtAscii = true;
-          else break; // UTF-8
-        } else if ((c & 0xF0) != 0) { //possibly byte-1 of 3-byte UTF-8 char
-          if (((_buf[_off + ++i] & 0x80) != 0)
-              || ((_buf[_off + ++i] & 0x80) != 0)) isExtAscii = true;
-          else break; // UTF-8
-        } else if ((c & 0xF8) != 0) { //possibly byte-1 of 4-byte UTF-8 char
-          if (((_buf[_off + ++i] & 0x80) != 0)
-              || ((_buf[_off + ++i] & 0x80) != 0)
-              || ((_buf[_off + ++i] & 0x80) !=0)) isExtAscii = true;
-          else break; // UTF-8
-        } else if ((c & 0xFC) != 0) { //possibly byte-1 of 5-byte UTF-8 char
-          if (((_buf[_off + ++i] & 0x80) != 0)
-              || ((_buf[_off + ++i] & 0x80) != 0)
-              || ((_buf[_off + ++i] & 0x80) != 0)
-              || ((_buf[_off + ++i] & 0x80) != 0)) isExtAscii = true;
-        } else if ((c & 0xFE) != 0) { //possible byte-1 of 6-byte UTF-8 char
-          if (((_buf[_off + ++i] & 0x80) != 0)
-              || ((_buf[_off + ++i] & 0x80) !=0 )
-              || ((_buf[_off + ++i] & 0x80) != 0)
-              || ((_buf[_off + ++i] & 0x80) != 0)
-              || ((_buf[_off + ++i] & 0x80) != 0)) isExtAscii = true;
+        } else if ((c & 0xE0) == 192) { //possibly byte-1 of 2-byte UTF-8 char
+          if ((_buf[_off + ++i] & 0xC0) == 128) break; // UTF8
+          else isExtAscii = true;
+        } else if ((c & 0xF0) == 224) { //possibly byte-1 of 3-byte UTF-8 char
+          if (((_buf[_off + ++i] & 0xC0) == 128)
+              && ((_buf[_off + ++i] & 0xC0) == 128)) break; // UTF-8
+          else isExtAscii = true;
+        } else if ((c & 0xF8) == 240) { //possibly byte-1 of 4-byte UTF-8 char
+          if (((_buf[_off + ++i] & 0xC0) == 128)
+              || ((_buf[_off + ++i] & 0xC0) == 128)
+              || ((_buf[_off + ++i] & 0xC0) == 128)) break; // UTF-8
+          else isExtAscii = true;
+        } else if ((c & 0xFC) == 248) { //possibly byte-1 of 5-byte UTF-8 char
+          if (((_buf[_off + ++i] & 0xC0) == 128)
+              || ((_buf[_off + ++i] & 0xC0) == 128)
+              || ((_buf[_off + ++i] & 0xC0) == 128)
+              || ((_buf[_off + ++i] & 0xC0) == 128)) break; // UTF-8
+          else isExtAscii = true;
+        } else if ((c & 0xFE) == 252) { //possible byte-1 of 6-byte UTF-8 char
+          if (((_buf[_off + ++i] & 0xc0) == 128)
+              || ((_buf[_off + ++i] & 0xC0) == 128)
+              || ((_buf[_off + ++i] & 0xC0) == 128)
+              || ((_buf[_off + ++i] & 0xC0) == 128)
+              || ((_buf[_off + ++i] & 0xC0) == 128)) break; // UTF-8
+          else isExtAscii = true;
         } else // not UTF-8
           isExtAscii = true;
       }

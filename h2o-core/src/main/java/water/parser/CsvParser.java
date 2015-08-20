@@ -102,7 +102,7 @@ MAIN_LOOP:
           }
           if (!isEOL(c) && ((quotes != 0) || (c != CHAR_SEPARATOR))) {
             str.addChar();
-            if ( (c & (byte) 0x80) != 0) // not ASCII
+            if ( (c & 0x80) == 128) // not ASCII
               checkForExtAscii = true;
             break;
           }
