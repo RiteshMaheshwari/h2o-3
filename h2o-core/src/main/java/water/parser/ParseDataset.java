@@ -27,7 +27,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import com.google.common.base.Charsets;
-import org.apache.commons.lang.StringUtils;
 
 public final class ParseDataset extends Job<Frame> {
   private MultiFileParseTask _mfpt; // Access to partially built vectors for cleanup after parser crash
@@ -239,13 +238,13 @@ public final class ParseDataset extends Job<Frame> {
         //Test domains for excessive length.
         List<String> offendingColNames = new ArrayList<>();
         for (int i = 0; i < ecols.length; i++) {
-          if (gcdt.getDomainLength(i) > Categorical.MAX_CATEGORICAL_COUNT)
-            offendingColNames.add(setup._column_names[ecols[i]]);
-          else
+          if (gcdt.getDomainLength(i) < Categorical.MAX_CATEGORICAL_COUNT)
             avs[ecols[i]].setDomain(gcdt.getDomain(i));
+          else
+            offendingColNames.add(setup._column_names[ecols[i]]);
         }
         if (offendingColNames.size() > 0)
-          throw new H2OParseException("Exceeded categorical limit on columns "+ StringUtils.join(offendingColNames,", ")+".   Consider reparsing these columns as a string.");
+          throw new H2OParseException("Exceeded categorical limit on columns "+ offendingColNames+".   Consider reparsing these columns as a string.");
       }
 
       job.update(0, "Compressing data.");
