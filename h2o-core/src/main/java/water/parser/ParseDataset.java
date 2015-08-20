@@ -239,14 +239,14 @@ public final class ParseDataset extends Job<Frame> {
         GatherCategoricalDomainsTask gcdt = new GatherCategoricalDomainsTask(mfpt._eKey, ecols).doAllNodes();
         //Test domains for excessive length.
         List<String> offendingColNames = new ArrayList<>();
-        for (int i = 0; i < ecols.length; i++)
+        for (int i = 0; i < ecols.length; i++) {
           if (gcdt.getDomainLength(i) > Categorical.MAX_CATEGORICAL_COUNT)
             offendingColNames.add(setup._column_names[ecols[i]]);
+          else
+            avs[ecols[i]].setDomain(gcdt.getDomain(i));
+        }
         if (offendingColNames.size() > 0)
           throw new H2OParseException("Exceeded categorical limit on columns "+ StringUtils.join(offendingColNames,", ")+".   Consider reparsing these columns as a string.");
-
-        for (int i = 0; i < ecols.length; i++)
-          avs[ecols[i]].setDomain(gcdt.getDomain(i));
       }
 
       job.update(0, "Compressing data.");
