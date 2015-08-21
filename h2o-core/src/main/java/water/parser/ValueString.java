@@ -109,48 +109,57 @@ public class ValueString extends Iced implements Comparable<ValueString> {
   public final int getOffset() {return _off;}
   public final int length() {return _len;}
 
-  public boolean detectExtAscii() {
-    boolean isExtAscii = false;
+  /**
+   * This detect whether the character set is valid UTF-8.
+   * @return true/false
+   */
+  public boolean isUTF8() {
+    boolean isUTF8 = true;
     for (int i=0; i < _len; i++) {
       byte c = _buf[_off+i];
       if ((c & 0x80) == 128) { //possible start of UTF-8 bytes or extended ASCII
         if ((c & 0xC0) != 192) { // not valid UTF-8
-          isExtAscii = true;
+          isUTF8 = false;
           break;
         } else if ((c & 0xE0) == 192) { //possibly byte-1 of 2-byte UTF-8 char
-          if ((_buf[_off + ++i] & 0xC0) == 128) break; // UTF8
-          else isExtAscii = true;
+          if ((i+1 < _len)
+              && (_buf[_off + ++i] & 0xC0) == 128) break; // UTF8
+          else isUTF8 = false;
         } else if ((c & 0xF0) == 224) { //possibly byte-1 of 3-byte UTF-8 char
-          if (((_buf[_off + ++i] & 0xC0) == 128)
+          if ((i+2 < _len)
+              && ((_buf[_off + ++i] & 0xC0) == 128)
               && ((_buf[_off + ++i] & 0xC0) == 128)) break; // UTF-8
-          else isExtAscii = true;
+          else isUTF8 = false;
         } else if ((c & 0xF8) == 240) { //possibly byte-1 of 4-byte UTF-8 char
-          if (((_buf[_off + ++i] & 0xC0) == 128)
-              || ((_buf[_off + ++i] & 0xC0) == 128)
-              || ((_buf[_off + ++i] & 0xC0) == 128)) break; // UTF-8
-          else isExtAscii = true;
+          if ((i+3 < _len)
+              && ((_buf[_off + ++i] & 0xC0) == 128)
+              && ((_buf[_off + ++i] & 0xC0) == 128)
+              && ((_buf[_off + ++i] & 0xC0) == 128)) break; // UTF-8
+          else isUTF8 = false;
         } else if ((c & 0xFC) == 248) { //possibly byte-1 of 5-byte UTF-8 char
-          if (((_buf[_off + ++i] & 0xC0) == 128)
-              || ((_buf[_off + ++i] & 0xC0) == 128)
-              || ((_buf[_off + ++i] & 0xC0) == 128)
-              || ((_buf[_off + ++i] & 0xC0) == 128)) break; // UTF-8
-          else isExtAscii = true;
+          if ((i+4 < _len)
+              && ((_buf[_off + ++i] & 0xC0) == 128)
+              && ((_buf[_off + ++i] & 0xC0) == 128)
+              && ((_buf[_off + ++i] & 0xC0) == 128)
+              && ((_buf[_off + ++i] & 0xC0) == 128)) break; // UTF-8
+          else isUTF8 = false;
         } else if ((c & 0xFE) == 252) { //possible byte-1 of 6-byte UTF-8 char
-          if (((_buf[_off + ++i] & 0xc0) == 128)
-              || ((_buf[_off + ++i] & 0xC0) == 128)
-              || ((_buf[_off + ++i] & 0xC0) == 128)
-              || ((_buf[_off + ++i] & 0xC0) == 128)
-              || ((_buf[_off + ++i] & 0xC0) == 128)) break; // UTF-8
-          else isExtAscii = true;
+          if ((i+5 < _len)
+              && ((_buf[_off + ++i] & 0xc0) == 128)
+              && ((_buf[_off + ++i] & 0xC0) == 128)
+              && ((_buf[_off + ++i] & 0xC0) == 128)
+              && ((_buf[_off + ++i] & 0xC0) == 128)
+              && ((_buf[_off + ++i] & 0xC0) == 128)) break; // UTF-8
+          else isUTF8 = false;
         } else // not UTF-8
-          isExtAscii = true;
+          isUTF8 = false;
       }
-      if (isExtAscii) break;
+      if (!isUTF8) break;
     }
-    return isExtAscii;
+    return isUTF8;
   }
 
-  public ValueString convertExtAscii() {
+  public ValueString convertISO_8859_1() {
     return new ValueString(new String(_buf, _off, _len, Charsets.ISO_8859_1));
   }
 }

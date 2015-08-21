@@ -102,7 +102,7 @@ MAIN_LOOP:
           }
           if (!isEOL(c) && ((quotes != 0) || (c != CHAR_SEPARATOR))) {
             str.addChar();
-            if ( (c & 0x80) == 128) // not ASCII
+            if ( (c & 0x80) == 128) // beyond std ASCII
               checkForExtAscii = true;
             break;
           }
@@ -127,8 +127,8 @@ MAIN_LOOP:
             }
           }
           if (!isNa) {
-            if (checkForExtAscii && str.detectExtAscii())
-              str = str.convertExtAscii();
+            if (checkForExtAscii && !str.isUTF8()) //presume ISO_8859_1
+              str = str.convertISO_8859_1();
             dout.addStrCol(colIdx, str);
           } else {
             dout.addInvalidCol(colIdx);
